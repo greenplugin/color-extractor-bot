@@ -1,0 +1,46 @@
+parameters:
+  telegram.token: '%env(TELEGRAM_TOKEN)%'
+  telegram.webhook_secret: '%env(TELEGRAM_WEBHOOK_SECRET)%'
+  telegram.admin_id: '%env(TELEGRAM_ADMIN_ID)%'
+
+services:
+  GuzzleHttp\Client:
+    arguments:
+      - { timeout: 120}
+
+  Http\Factory\Guzzle\RequestFactory:
+  Http\Factory\Guzzle\StreamFactory:
+
+  Psr\Http\Message\RequestFactoryInterface: '@Http\Factory\Guzzle\RequestFactory'
+  Psr\Http\Message\StreamFactoryInterface: '@Http\Factory\Guzzle\StreamFactory'
+
+  Http\Adapter\Guzzle6\Client:
+    arguments:
+      - '@GuzzleHttp\Client'
+
+  Psr\Http\Client\ClientInterface: '@Http\Adapter\Guzzle6\Client'
+
+  TgBotApi\BotApiBase\BotApiNormalizer:
+
+  TgBotApi\BotApiBase\NormalizerInterface: '@TgBotApi\BotApiBase\BotApiNormalizer'
+
+  TgBotApi\BotApiBase\ApiClientInterface:
+    class: TgBotApi\BotApiBase\ApiClient
+    arguments:
+      - '@Psr\Http\Message\RequestFactoryInterface'
+      - '@Psr\Http\Message\StreamFactoryInterface'
+      - '@Psr\Http\Client\ClientInterface'
+
+  TgBotApi\BotApiBase\WebhookFetcherInterface:
+    class: TgBotApi\BotApiBase\WebhookFetcher
+    arguments:
+      - '@TgBotApi\BotApiBase\NormalizerInterface'
+
+
+  TgBotApi\BotApiBase\BotApiInterface:
+    class: TgBotApi\BotApiBase\BotApiComplete
+    arguments:
+      - '%telegram.token%'
+      - '@TgBotApi\BotApiBase\ApiClientInterface'
+      - '@TgBotApi\BotApiBase\NormalizerInterface'
+    public: true
