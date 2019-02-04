@@ -32,7 +32,7 @@ class TelegramDownloader
             throw new AccessDeniedException(sprintf('%s file is not writable', $file->getPath()));
         }
 
-        file_put_contents($file->getPath(), $response->getBody());
+        file_put_contents($file->getPathname(), $response->getBody());
         return $file;
     }
 }

@@ -98,6 +98,9 @@
     "jdorn/sql-formatter": {
         "version": "v1.2.17"
     },
+    "league/color-extractor": {
+        "version": "0.3.2"
+    },
     "monolog/monolog": {
         "version": "1.24.0"
     },

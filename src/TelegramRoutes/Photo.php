@@ -19,12 +19,13 @@ class Photo implements RouteSetterInterface
      */
     public function register(TelegramRouteCollection $collection): void
     {
-        $collection->add(
-            new TelegramRoute(
-                RouterUpdateInterface::TYPE_MESSAGE,
-                [new PhotoRule()],
-                TelegramImagePaletteController::class
-            )
-        )->extract(['photo' => 'min'], PhotoExtractor::class);
+        $collection->add(new TelegramRoute(
+            RouterUpdateInterface::TYPE_MESSAGE,
+            [new PhotoRule()],
+            TelegramImagePaletteController::class
+        ))
+            ->extract(['photo' => 'min'], PhotoExtractor::class)
+            ->extract(['user' => 'message.from'])
+            ->extract(['chat' => 'message.chat']);
     }
 }
