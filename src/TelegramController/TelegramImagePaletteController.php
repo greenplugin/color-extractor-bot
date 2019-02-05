@@ -12,7 +12,10 @@ use League\ColorExtractor\Palette;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use TgBotApi\BotApiBase\BotApiInterface;
 use TgBotApi\BotApiBase\Method\GetFileMethod;
+use TgBotApi\BotApiBase\Method\SendChatActionMethod;
+use TgBotApi\BotApiBase\Method\SendPhotoMethod;
 use TgBotApi\BotApiBase\Type\ChatType;
+use TgBotApi\BotApiBase\Type\InputFileType;
 use TgBotApi\BotApiBase\Type\PhotoSizeType;
 use TgBotApi\BotApiBase\Type\UserType;
 
@@ -41,18 +44,26 @@ class TelegramImagePaletteController
      * @param PhotoSizeType $photo
      * @throws \Psr\Http\Client\ClientExceptionInterface
      * @throws \TgBotApi\BotApiBase\Exception\ResponseException
+     * @throws \TgBotApi\BotApiBase\Exception\BadArgumentException
      */
     public function __invoke(ChatType $chat, UserType $user, PhotoSizeType $photo)
     {
+        $this->bot->sendChatAction(SendChatActionMethod::create($chat->id, SendChatActionMethod::ACTION_UPLOAD_PHOTO));
         $path = sprintf('%s/%s', $this->params->get('photo_temp_dir'), $photo->fileId);
         $file = $this->bot->getFile(GetFileMethod::create($photo->fileId));
         $file = $this->downloader->download($this->bot->getAbsoluteFilePath($file), $path);
         $palette = Palette::fromFilename($file->getPathname());
         $colors = [];
+        $colorsValues = [];
         foreach ($palette->getMostUsedColors(10) as $color => $value) {
-            $colors[] = Color::fromIntToHex($color);
+            $colors[] = [Color::fromIntToHex($color), $value];
+            $colorsValues[] = Color::fromIntToHex($color);
         }
-        $this->imageMaker->make($file, $colors);
-        $this->bot->send(SendMessageMethod::make($chat, implode("\n", $colors)));
+        $generatedImage = $this->imageMaker->make($file, $colors);
+        $this->bot->send(SendPhotoMethod::create(
+            $chat->id,
+            InputFileType::create($generatedImage->getPathname()),
+            ['caption' => implode("\n", $colorsValues)]
+        ));
     }
 }

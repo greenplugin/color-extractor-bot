@@ -43,5 +43,10 @@ services:
     class: App\Service\TelegramDownloader
     public: true
 
+  Intervention\Image\ImageManager:
+    arguments:
+      - {driver: imagick}
+
+
 imports:
   {resource: 'packages/telegram.yaml'}
