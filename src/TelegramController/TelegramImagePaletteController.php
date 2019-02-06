@@ -8,6 +8,7 @@ use App\Service\ImageMaker;
 use App\Service\TelegramDownloader;
 use App\TelegramMethod\SendMessageMethod;
 use League\ColorExtractor\Color;
+use League\ColorExtractor\ColorExtractor;
 use League\ColorExtractor\Palette;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use TgBotApi\BotApiBase\BotApiInterface;
@@ -52,18 +53,19 @@ class TelegramImagePaletteController
         $path = sprintf('%s/%s', $this->params->get('photo_temp_dir'), $photo->fileId);
         $file = $this->bot->getFile(GetFileMethod::create($photo->fileId));
         $file = $this->downloader->download($this->bot->getAbsoluteFilePath($file), $path);
-        $palette = Palette::fromFilename($file->getPathname());
+        $extractor = new ColorExtractor(Palette::fromFilename($file->getPathname()));
+        $palette = $extractor->extract(10);
         $colors = [];
-        $colorsValues = [];
-        foreach ($palette->getMostUsedColors(10) as $color => $value) {
-            $colors[] = [Color::fromIntToHex($color), $value];
-            $colorsValues[] = Color::fromIntToHex($color);
+        foreach ($palette as $color) {
+            $colors[] = Color::fromIntToHex($color);
         }
         $generatedImage = $this->imageMaker->make($file, $colors);
         $this->bot->send(SendPhotoMethod::create(
             $chat->id,
             InputFileType::create($generatedImage->getPathname()),
-            ['caption' => implode("\n", $colorsValues)]
+            ['caption' => implode("\n", $colors)]
         ));
+        unlink($file->getPathname());
+        unlink($generatedImage->getPathname());
     }
 }
