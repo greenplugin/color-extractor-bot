@@ -5,6 +5,8 @@ namespace App\Service;
 
 
 use Intervention\Image\ImageManager;
+use OzdemirBurak\Iris\Color\Hex;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 class ImageMaker
 {
@@ -18,9 +20,12 @@ class ImageMaker
 
     private $intervention;
 
-    public function __construct(ImageManager $intervention)
+    private $config;
+
+    public function __construct(ImageManager $intervention, ParameterBagInterface $config)
     {
         $this->intervention = $intervention;
+        $this->config = $config;
     }
 
     public function make(\SplFileInfo $file, $colors): \SplFileInfo
@@ -29,10 +34,16 @@ class ImageMaker
         $image = $this->intervention->canvas(self::CANVAS_WIDTH, $this->canvasHeight);
 //        $image->resizeCanvas($image->width(), $image->height());
         foreach ($colors as $index => $color) {
+            $foreColor = $this->getForeColor($color);
             [$x1, $y1, $x2, $y2] = $this->getRectanglePosition($index, count($colors));
-            $image->rectangle($x1, $y1, $x2, $y2, function ($draw) use ($color) {
+            $image->rectangle($x1, $y1, $x2, $y2, function ($draw) use ($color, $foreColor) {
                 $draw->background($color);
                 $draw->border(1, '#fff');
+            });
+            $image->text($color, $x1 + 20, $y1 + 40, function ($font) use ($foreColor) {
+                $font->file($this->config->get('image_font'));
+                $font->size(20);
+                $font->color($foreColor);
             });
         }
         $newFile = new \SplFileInfo($file->getPath() . '/' . uniqid('exported_', false));
@@ -57,5 +68,16 @@ class ImageMaker
         $x2 = self::CANVAS_WIDTH - 1;
 
         return [$x1, $y1, $x2, $y2];
+    }
+
+    /**
+     * @param string $color
+     * @return string
+     * @throws \OzdemirBurak\Iris\Exceptions\InvalidColorException
+     */
+    private function getForeColor(string $color): string
+    {
+        $hex = new Hex($color);
+        return $hex->isLight() ? (string)$hex->shade() : (string)$hex->tint(70);
     }
 }

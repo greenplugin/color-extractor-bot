@@ -113,6 +113,9 @@
     "ocramius/proxy-manager": {
         "version": "2.1.1"
     },
+    "ozdemirburak/iris": {
+        "version": "1.2.1"
+    },
     "php-http/guzzle6-adapter": {
         "version": "v2.0.1"
     },

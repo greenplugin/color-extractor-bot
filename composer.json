@@ -8,6 +8,7 @@
     "http-interop/http-factory-guzzle": "^1.0",
     "intervention/image": "^2.4",
     "league/color-extractor": "0.3.*",
+    "ozdemirburak/iris": "^1.2",
     "php-http/guzzle6-adapter": "^2.0",
     "sensio/framework-extra-bundle": "^5.1",
     "symfony/asset": "4.2.*",
